@@ -1,0 +1,8 @@
+*.tlog
+*.idb
+*.srt
+*.json
+*.vcxproj
+*.filters
+*.res
+*.txt
