@@ -26,4 +26,5 @@ private:
 	static std::vector<wchar_t*> titles;
 	static std::vector<std::string> titlesId;
 	static Window* window;
+	static bool removeNextEnChange;
 };

@@ -19,10 +19,12 @@ CComPtr<IAutoComplete> SearchBox::autoComplete;
 std::vector<wchar_t*> SearchBox::titles;
 std::vector<std::string> SearchBox::titlesId;
 Window* SearchBox::window;
+bool SearchBox::removeNextEnChange;
 
 SearchBox::SearchBox(Window& wnd)
 {
 	window = &wnd;
+	removeNextEnChange = false;
 }
 
 void SearchBox::show(HWND hWnd) 
@@ -315,7 +317,10 @@ INT_PTR CALLBACK SearchBox::searchBoxProc(HWND hDlg, UINT message, WPARAM wParam
 			ComboBox_AddString(combo, L"dut");
 			ComboBox_SetCurSel(combo, 1);
 			std::string imdb = window->getProperties().get("search.imdb", "-1");
-			if (imdb.compare("-1") != 0)  titlesId.push_back("tt"+imdb);
+			if (imdb.compare("-1") != 0)  {
+				titlesId.push_back("tt" + imdb);
+				removeNextEnChange = true;
+			}
 			SetWindowTextA(combo, window->getProperties().get("search.language", "").c_str());
 			SetWindowTextA(GetDlgItem (hDlg, IDC_EDIT1), window->getProperties().get("search.movie", "").c_str());
 			SetWindowTextA(GetDlgItem (hDlg, IDC_EDIT_EPISODE), window->getProperties().get("search.episode", "").c_str());
@@ -335,6 +340,11 @@ INT_PTR CALLBACK SearchBox::searchBoxProc(HWND hDlg, UINT message, WPARAM wParam
 		// Update suggestions when the text change
 		if (HIWORD(wParam) == EN_CHANGE && LOWORD(wParam) == IDC_EDIT1) 
 		{
+			if (removeNextEnChange) 
+			{
+				removeNextEnChange = false;
+				break;
+			}
 			char buff[256];
 			GetWindowTextA((HWND)lParam, buff, 255);
 			findSuggestions(buff);
