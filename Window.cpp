@@ -30,7 +30,6 @@ Window::Window(HINSTANCE& hInstance) :
 	showedStyle = WS_OVERLAPPEDWINDOW | WS_VISIBLE;
 	hidedStyle = WS_POPUP | WS_VISIBLE;
 
-	// Load the properties
 	loadProperties();
 
 	font = new TextFont(L"Arial", 22, FontStyleBold);
@@ -53,35 +52,42 @@ HWND Window::getWnd()
 }
 
 
+#define DEFAULT_VAL(KEY, VAL) \
+	if (!properties.get_child_optional(KEY)) \
+	{\
+		properties.put(KEY, VAL);\
+	}
+
+// Load (create with default value if not exist) the properties in the json file
 void Window::loadProperties() 
 {
 	std::ifstream file("properties.json");
 	if (file.good()) {
 		try {
 			boost::property_tree::read_json("properties.json", properties);
-			return;
 		} catch(...) {
 			print("Unable to read properties.json");
 		}
 	}
+
 	// Search
-	properties.put("search.movie", "");
-	properties.put("search.imdb", "");
-	properties.put("search.language", "eng");
-	properties.put("search.season", "");
-	properties.put("search.episode", "");
+	DEFAULT_VAL("search.movie", "");
+	DEFAULT_VAL("search.imdb", "");
+	DEFAULT_VAL("search.language", "eng");
+	DEFAULT_VAL("search.season", "");
+	DEFAULT_VAL("search.episode", "");
 
 	// Hotkeys
-	properties.put("hotkeys.pause.enabled", true);
-	properties.put("hotkeys.pause.keycode", VK_F2);
-	properties.put("hotkeys.previous.enabled", true);
-	properties.put("hotkeys.previous.keycode", VK_F1);
-	properties.put("hotkeys.next.enabled", true);
-	properties.put("hotkeys.next.keycode", VK_F3);
-	properties.put("hotkeys.decrease.enabled", true);
-	properties.put("hotkeys.decrease.keycode", VK_F4);
-	properties.put("hotkeys.increase.enabled", true);
-	properties.put("hotkeys.increase.keycode", VK_F5);
+	DEFAULT_VAL("hotkeys.pause.enabled", true);
+	DEFAULT_VAL("hotkeys.pause.keycode", VK_F2);
+	DEFAULT_VAL("hotkeys.previous.enabled", true);
+	DEFAULT_VAL("hotkeys.previous.keycode", VK_F1);
+	DEFAULT_VAL("hotkeys.next.enabled", true);
+	DEFAULT_VAL("hotkeys.next.keycode", VK_F3);
+	DEFAULT_VAL("hotkeys.decrease.enabled", true);
+	DEFAULT_VAL("hotkeys.decrease.keycode", VK_F4);
+	DEFAULT_VAL("hotkeys.increase.enabled", true);
+	DEFAULT_VAL("hotkeys.increase.keycode", VK_F5);
 }
 
 boost::property_tree::ptree& Window::getProperties()
