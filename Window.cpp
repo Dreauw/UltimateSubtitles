@@ -391,7 +391,9 @@ void Window::updateSubtitles(std::vector<std::wstring>& newLines)
 
 void Window::adjust(wchar_t* largestLine, int height)
 {
-	HMONITOR hMon = MonitorFromWindow(hWnd, MONITOR_DEFAULTTONEAREST);
+	POINT pt;
+	GetCursorPos(&pt);
+	HMONITOR hMon = MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST);
 	MONITORINFO monInfo;
 	monInfo.cbSize = sizeof (MONITORINFO);
 	GetMonitorInfo(hMon , &monInfo);
@@ -404,8 +406,8 @@ void Window::adjust(wchar_t* largestLine, int height)
 	clientRect.bottom = rect.bottom;
 	clientRect.right = rect.right;
 	AdjustWindowRect(&rect, showedStyle, TRUE);
-	int x = ((monInfo.rcMonitor.right - monInfo.rcMonitor.left) - (rect.right - rect.left)) / 2;
-	int y = (monInfo.rcMonitor.bottom - monInfo.rcMonitor.top) - (rect.bottom - rect.top);
+	int x = monInfo.rcMonitor.left + ((monInfo.rcMonitor.right - monInfo.rcMonitor.left) - (rect.right - rect.left)) / 2;
+	int y = monInfo.rcMonitor.top + (monInfo.rcMonitor.bottom - monInfo.rcMonitor.top) - (rect.bottom - rect.top);
 	MoveWindow(hWnd, x, y, rect.right - rect.left, rect.bottom - rect.top, TRUE);
 }
 
