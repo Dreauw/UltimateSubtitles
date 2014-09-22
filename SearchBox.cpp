@@ -34,15 +34,19 @@ void SearchBox::downloadSubtitle(std::string& imdbId, std::string& name, std::st
 {
 	boost::property_tree::ptree resPt;
 	XmlRpc res(resPt);
+	std::string strApi = window->getProperties().get("opensubtitles.api", "");
+	std::string  strUsername = window->getProperties().get("opensubtitles.username", "");
+	std::string  strPassword = window->getProperties().get("opensubtitles.password", "");
+	std::string  strUseragent = window->getProperties().get("opensubtitles.useragent", "");
 
 	// LogIn (OpenSubtitle)
-	HINTERNET hConnect = Net::connect("api.opensubtitles.org");
+	HINTERNET hConnect = Net::connect((char*)strApi.c_str());
 	boost::property_tree::ptree ptLogin;
 	XmlRpc login(ptLogin, "LogIn");
-	login[0] = "";
-	login[1] = "";
+	login[0] = (char*) strUsername.c_str();
+	login[1] = (char*) strPassword.c_str();
 	login[2] = "en";
-	login[3] = "OS Test User Agent";
+	login[3] = (char*) strUseragent.c_str();
 	Net::sendXmlRpc(hConnect, "/xml-rpc", login, res);
 	std::string token = res[0]["token"].getString();
 

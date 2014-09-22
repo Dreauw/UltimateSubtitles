@@ -70,6 +70,12 @@ void Window::loadProperties()
 		}
 	}
 
+	// Properties related to opensubtitles
+	DEFAULT_VAL("opensubtitles.api", "api.opensubtitles.org");
+	DEFAULT_VAL("opensubtitles.username", "");
+	DEFAULT_VAL("opensubtitles.password", "");
+	DEFAULT_VAL("opensubtitles.useragent", "OS Test User Agent");
+
 	// Search
 	DEFAULT_VAL("search.movie", "");
 	DEFAULT_VAL("search.imdb", "");
