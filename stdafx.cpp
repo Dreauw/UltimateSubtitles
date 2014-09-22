@@ -14,7 +14,7 @@ void print(char* str, ...)
 	va_list args;
 	va_start (args, str);
 	vsnprintf_s(buffer, 1023, str, args);
-	MessageBoxA(NULL, buffer, "Print", MB_OK);
+	MessageBoxA(GetForegroundWindow(), buffer, "Print", MB_OK);
 	//OutputDebugStringA(buffer);
 	va_end (args);
 }
