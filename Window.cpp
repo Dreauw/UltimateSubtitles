@@ -74,7 +74,7 @@ void Window::loadProperties()
 	DEFAULT_VAL("opensubtitles.api", "api.opensubtitles.org");
 	DEFAULT_VAL("opensubtitles.username", "");
 	DEFAULT_VAL("opensubtitles.password", "");
-	DEFAULT_VAL("opensubtitles.useragent", "OS Test User Agent");
+	DEFAULT_VAL("opensubtitles.useragent", "OSTestUserAgent");
 
 	// Search
 	DEFAULT_VAL("search.movie", "");
