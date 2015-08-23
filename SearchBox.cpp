@@ -72,6 +72,9 @@ void SearchBox::downloadSubtitle(std::string& imdbId, std::string& name, std::st
 		// Choose the best rated subtitle
 		std::string downloadLink;
 		std::string fileName;
+
+		std::string tmpDownloadLink;
+		std::string tmpfileName;
 		double rating = -1;
 		int idx = 0;
 		BOOST_FOREACH(boost::property_tree::ptree::value_type &v, searchList)
@@ -81,11 +84,16 @@ void SearchBox::downloadSubtitle(std::string& imdbId, std::string& name, std::st
 
 			XmlRpc entry(v.second);
 			double tmpRating = ::atof(entry["SubRating"].getString().c_str());
-			if (tmpRating > rating) {
-			//if (idx == 1) {
+			tmpDownloadLink = entry["SubDownloadLink"].getString();
+			tmpfileName = entry["SubFileName"].getString();
+
+			// Choose in priority file with a supported extension
+			// (.srt is the only format supported atm)
+			if (fileName.empty() || (hasSupportedExtension(tmpfileName) &&
+				(!hasSupportedExtension(fileName) || tmpRating > rating ))) {
 				rating = tmpRating;
-				downloadLink = entry["SubDownloadLink"].getString();
-				fileName = entry["SubFileName"].getString();
+				downloadLink = tmpDownloadLink;
+				fileName = tmpfileName;
 			}
 			idx++;
 		}
@@ -147,6 +155,16 @@ void SearchBox::downloadSubtitle(std::string& imdbId, std::string& name, std::st
 	logout[0] = (char*)token.c_str();
 	Net::sendXmlRpc(hConnect, "/xml-rpc", logout, res);
 	Net::disconnect(hConnect);
+}
+
+bool SearchBox::hasSupportedExtension(std::string& filename)
+{
+	std::string::size_type pos = filename.find_last_of('.');
+	if (pos != std::string::npos) {
+		return filename.substr(pos + 1).compare("srt") == 0;
+	}
+
+	return false;
 }
 
 

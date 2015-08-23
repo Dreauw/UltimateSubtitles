@@ -18,6 +18,7 @@ private:
 	static std::string getImdbId(std::string& str);
 	static void downloadSubtitle(std::string& imdbId, std::string& name, std::string& lang, int season, int episode);
 	static void onOk(HWND dlg);
+	static bool hasSupportedExtension(std::string& filename);
 
 	typedef CComObject<CComEnum<IEnumString, &IID_IEnumString, wchar_t*, _Copy<wchar_t*> >> CComEnumString;
 	static CComObject<CComEnumString>* enumStr;
