@@ -400,7 +400,7 @@ void Window::adjust(wchar_t* largestLine, int height)
 
 	RectF bounds = font->getTextBounds(GetDC(NULL), monInfo.rcMonitor, largestLine);
 	
-	RECT rect = {0, 0, (LONG)(bounds.GetRight()) + 60, (LONG)(bounds.GetBottom()) * height + 10};
+	RECT rect = {0, 0, (LONG)(bounds.GetRight()) + 120, (LONG)(bounds.GetBottom()) * height + 10};
 	clientRect.top = rect.top;
 	clientRect.left = rect.left;
 	clientRect.bottom = rect.bottom;
