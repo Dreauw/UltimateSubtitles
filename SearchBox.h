@@ -16,9 +16,10 @@ private:
 	static void findSuggestions(char* text); 
 	static void getBasicString(std::string& str);
 	static std::string getImdbId(std::string& str);
-	static void downloadSubtitle(std::string& imdbId, std::string& name, std::string& lang, int season, int episode);
+	static void searchAndDownloadSubtitle(std::string& imdbId, std::string& name, std::string& lang, int season, int episode);
 	static void onOk(HWND dlg);
 	static bool hasSupportedExtension(std::string& filename);
+	static void downloadSubtitle(std::string& downloadLink, std::wstring& outBuffer);
 
 	typedef CComObject<CComEnum<IEnumString, &IID_IEnumString, wchar_t*, _Copy<wchar_t*> >> CComEnumString;
 	static CComObject<CComEnumString>* enumStr;

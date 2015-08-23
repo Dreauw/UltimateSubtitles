@@ -8,6 +8,7 @@
 #include "Subtitles.h"
 #include "Window.h"
 #include "SearchBox.h"
+#include "SubtitleBox.h";
 
 class MyModule : public CAtlExeModuleT<MyModule> {};
 MyModule _Module;
@@ -32,8 +33,56 @@ void SearchBox::show(HWND hWnd)
 	DialogBox(NULL, MAKEINTRESOURCE(IDD_SEARCHBOX), hWnd, searchBoxProc);
 }
 
-void SearchBox::downloadSubtitle(std::string& imdbId, std::string& name, std::string& lang, int season, int episode)
+void SearchBox::downloadSubtitle(std::string& downloadLink, std::wstring& outBuffer) 
 {
+	// Download the subtitle
+	std::string buffer;
+	
+	int size = Net::download(downloadLink, &buffer);
+	// Decompress the subtitle
+	char buff[1024];
+	std::string subBuff;
+	z_stream infstream;
+	infstream.zalloc = Z_NULL;
+	infstream.zfree = Z_NULL;
+	infstream.opaque = Z_NULL;
+	infstream.avail_in = (uInt)size; // size of input
+	infstream.next_in = (Bytef *)buffer.c_str(); // input char array
+	infstream.avail_out = 0;//(uInt)1024; // size of output
+	infstream.next_out = (Bytef *)buff; // output char array
+	inflateInit2(&infstream, 16+MAX_WBITS);
+	while (infstream.avail_out == 0) {
+		infstream.next_out = (Bytef *)buff;
+		infstream.avail_out = (uInt)1023;
+		inflate(&infstream, Z_NO_FLUSH);
+		subBuff.append(buff, 1023-infstream.avail_out);
+	}
+	inflateEnd(&infstream);
+
+	// Encodage detection
+	if (subBuff.substr(0, 3) == "ï»¿") {
+		outBuffer.append(CA2W(subBuff.c_str(), CP_UTF8));
+	} else {
+		CComPtr<IMultiLanguage2> spMLang;
+ 
+		DetectEncodingInfo lpInfo[1];
+		INT nScore = 1;
+		INT nlen = subBuff.length();
+
+		spMLang.CoCreateInstance(CLSID_CMultiLanguage);
+		UINT  codePage = CP_UTF8;
+		DWORD err = spMLang->DetectInputCodepage(MLDETECTCP_NONE, 0, (CHAR*)subBuff.c_str(), &nlen, lpInfo, &nScore);
+		if (err == S_OK) {
+			codePage = lpInfo[0].nCodePage;
+		}
+		outBuffer.append(CA2W(subBuff.c_str(), codePage));
+	}
+	boost::replace_all(outBuffer, "\r\n", "\n");
+}
+
+void SearchBox::searchAndDownloadSubtitle(std::string& imdbId, std::string& name, std::string& lang, int season, int episode)
+{
+	std::map<std::string, std::string> filesFound;
 	boost::property_tree::ptree resPt;
 	XmlRpc res(resPt);
 	std::string strApi = window->getProperties().get("opensubtitles.api", "");
@@ -79,74 +128,47 @@ void SearchBox::downloadSubtitle(std::string& imdbId, std::string& name, std::st
 		int idx = 0;
 		BOOST_FOREACH(boost::property_tree::ptree::value_type &v, searchList)
 		{
-			// Should be in the top 8 of most downloaded
-			if (idx > 8) break;
-
 			XmlRpc entry(v.second);
-			double tmpRating = ::atof(entry["SubRating"].getString().c_str());
 			tmpDownloadLink = entry["SubDownloadLink"].getString();
 			tmpfileName = entry["SubFileName"].getString();
-
-			// Choose in priority file with a supported extension
-			// (.srt is the only format supported atm)
-			if (fileName.empty() || (hasSupportedExtension(tmpfileName) &&
-				(!hasSupportedExtension(fileName) || tmpRating > rating ))) {
-				rating = tmpRating;
-				downloadLink = tmpDownloadLink;
-				fileName = tmpfileName;
+			// Should be in the top 8 of most downloaded
+			if (idx < 8) {
+				double tmpRating = ::atof(entry["SubRating"].getString().c_str());
+				// Choose in priority file with a supported extension
+				// (.srt is the only format supported atm)
+				if (fileName.empty() || (hasSupportedExtension(tmpfileName) &&
+					(!hasSupportedExtension(fileName) || tmpRating > rating ))) {
+					rating = tmpRating;
+					downloadLink = tmpDownloadLink;
+					fileName = tmpfileName;
+				}
 			}
+			filesFound[tmpfileName] = tmpDownloadLink;
 			idx++;
 		}
-		SetWindowTextA(window->getWnd(), ("UltimateSubtitles - " + fileName).c_str());
 
-		// Download the subtitle
-		std::string buffer;
-	
-		int size = Net::download(downloadLink, &buffer);
-		// Decompress the subtitle
-		char buff[1024];
-		std::string subBuff;
-		z_stream infstream;
-		infstream.zalloc = Z_NULL;
-		infstream.zfree = Z_NULL;
-		infstream.opaque = Z_NULL;
-		infstream.avail_in = (uInt)size; // size of input
-		infstream.next_in = (Bytef *)buffer.c_str(); // input char array
-		infstream.avail_out = 0;//(uInt)1024; // size of output
-		infstream.next_out = (Bytef *)buff; // output char array
-		inflateInit2(&infstream, 16+MAX_WBITS);
-		while (infstream.avail_out == 0) {
-			infstream.next_out = (Bytef *)buff;
-			infstream.avail_out = (uInt)1023;
-			inflate(&infstream, Z_NO_FLUSH);
-			subBuff.append(buff, 1023-infstream.avail_out);
-		}
-		inflateEnd(&infstream);
 
 		std::wstring utfBuffer;
+		bool res = false;
 
-		if (subBuff.substr(0, 3) == "ï»¿") {
-			utfBuffer.append(CA2W(subBuff.c_str(), CP_UTF8));
-		} else {
-			CComPtr<IMultiLanguage2> spMLang;
- 
-			DetectEncodingInfo lpInfo[1];
-			INT nScore = 1;
-			INT nlen = subBuff.length();
-
-			spMLang.CoCreateInstance(CLSID_CMultiLanguage);
-			UINT  codePage = CP_UTF8;
-			DWORD err = spMLang->DetectInputCodepage(MLDETECTCP_NONE, 0, (CHAR*)subBuff.c_str(), &nlen, lpInfo, &nScore);
-			if (err == S_OK) {
-				codePage = lpInfo[0].nCodePage;
+		// Repeat until we find a readable subtitle
+		do {
+			if (!utfBuffer.empty()) {
+				print("Unable to read the subtitle found\nPlease choose one from the list");
+				SubtitleBox subbox = SubtitleBox(*window, filesFound);
+				if (subbox.getResult() == NULL) break;
+				downloadLink = *subbox.getResult();
 			}
-			utfBuffer.append(CA2W(subBuff.c_str(), codePage));
+			utfBuffer.clear();
+			downloadSubtitle(downloadLink, utfBuffer);
+			std::wistringstream str(utfBuffer);
+			res = window->getSubtitles().load(str);
+		} while (!res);
+
+		if (res) {
+			SetWindowTextA(window->getWnd(), ("UltimateSubtitles - " + fileName).c_str());
 		}
-		boost::replace_all(utfBuffer, "\r\n", "\n");
 
-		std::wistringstream str(utfBuffer);
-
-		window->getSubtitles().load(str);
 	} catch(...) {
 		print("Unable to find this subtitle");
 		return;
@@ -320,7 +342,7 @@ void SearchBox::onOk(HWND hDlg)
 	if (season > 0) window->getProperties().put("search.season", season);
 	window->getProperties().put("search.episode", "");
 	if (episode > 0) window->getProperties().put("search.episode", episode);
-	downloadSubtitle(imdb, name, lang, season, episode);
+	searchAndDownloadSubtitle(imdb, name, lang, season, episode);
 }
 
 INT_PTR CALLBACK SearchBox::searchBoxProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)

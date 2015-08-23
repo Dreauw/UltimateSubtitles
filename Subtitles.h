@@ -16,7 +16,7 @@ public:
 	void timerCallback();
 	void pause();
 	void nextSubtitle();
-	void load(std::wistream& stream);
+	bool load(std::wistream& stream);
 	bool isPaused();
 	void adjustWindow();
 

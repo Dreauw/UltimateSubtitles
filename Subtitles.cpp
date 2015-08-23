@@ -14,7 +14,7 @@ Subtitles::Subtitles(Window& wnd) :
 	delay = 0;
 }
 
-void Subtitles::load(std::wistream& stream) 
+bool Subtitles::load(std::wistream& stream) 
 {
 	std::wstring line;
 	maxHeight = 0;
@@ -34,7 +34,7 @@ void Subtitles::load(std::wistream& stream)
 
 			if (res != 8 || startTime >= endTime) {
 				print("Unable to read this file (error when parsing timecodes)");
-				return;
+				return false;
 			}
 
 			Subtitle* startSubtitle = new Subtitle(startTime, endTime - startTime);
@@ -59,10 +59,15 @@ void Subtitles::load(std::wistream& stream)
 		
 	}
 
+	if (subtitles.size() == 0) {
+		return false;
+	}
+
 	
 	startTime = GetTickCount();
 	pause();
 	window.updateSubtitles(defaultSubtitle.getLines());
+	return true;
 }
 
 void Subtitles::adjustWindow() 

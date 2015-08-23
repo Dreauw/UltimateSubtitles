@@ -43,6 +43,7 @@
 #include <string>
 #include <vector>
 #include <set>
+#include <map>
 
 // Boost
 #include <boost\format.hpp>

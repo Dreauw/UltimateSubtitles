@@ -416,7 +416,7 @@ void Window::setInformation(std::wstring info)
 		information = info;
 		updateSubtitles(lines);
 }
-
+#include "SubtitleBox.h"
 LRESULT Window::proc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 	int wmId, wmEvent;
 	PAINTSTRUCT ps;
