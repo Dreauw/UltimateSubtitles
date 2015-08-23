@@ -135,9 +135,12 @@ void SearchBox::downloadSubtitle(std::string& imdbId, std::string& name, std::st
 			INT nlen = subBuff.length();
 
 			spMLang.CoCreateInstance(CLSID_CMultiLanguage);
+			UINT  codePage = CP_UTF8;
 			DWORD err = spMLang->DetectInputCodepage(MLDETECTCP_NONE, 0, (CHAR*)subBuff.c_str(), &nlen, lpInfo, &nScore);
-			
-			utfBuffer.append(CA2W(subBuff.c_str(), lpInfo[0].nCodePage));
+			if (err == S_OK) {
+				codePage = lpInfo[0].nCodePage;
+			}
+			utfBuffer.append(CA2W(subBuff.c_str(), codePage));
 		}
 		boost::replace_all(utfBuffer, "\r\n", "\n");
 
