@@ -19,16 +19,14 @@ SubtitleBox::SubtitleBox(Window& wnd, std::map<std::string, std::string>& subtit
 void SubtitleBox::onInit(HWND hDlg)
 {
 	HWND combo = GetDlgItem (hDlg, IDC_COMBO1);
-	int idx = 0;
 	for (std::map<std::string, std::string>::iterator it = subtitles.begin(); it != subtitles.end(); ++it)
 	{
 		std::wstring wstr(it->first.begin(), it->first.end());
 		std::wstring wstr2(it->second.begin(), it->second.end());
-		ComboBox_AddString(combo, wstr.c_str());
+		int idx = ComboBox_AddString(combo, wstr.c_str());
 		ComboBox_SetItemData(combo, idx, (LPARAM) &it->second);
-		++idx;
 	}
-	ComboBox_SetCurSel(combo, 1);
+	ComboBox_SetCurSel(combo, 0);
 }
 
 
